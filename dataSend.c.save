@@ -1,0 +1,95 @@
+
+
+
+#include <netinet/in.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <string.h>
+#include <math.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <netinet/if_ether.h>
+#include "dataSend.h"
+#include "main.h"
+#include "neighbourRead.h"
+#include "bat-hosts.h"
+#include "functions.h"
+#include "packet.h"
+#include "debugfs.h"
+//char is_aborted = 0;
+
+/*
+static void ping_usage(void)
+{
+	fprintf(stderr, "Usage: batctl [options] ping [parameters] mac|bat-host|host_name|IPv4_address \n");
+	fprintf(stderr, "parameters:\n");
+	fprintf(stderr, " \t -c ping packet count \n");
+	fprintf(stderr, " \t -h print this help\n");
+	fprintf(stderr, " \t -i interval in seconds\n");
+	fprintf(stderr, " \t -t timeout in seconds\n");
+	fprintf(stderr, " \t -R record route\n");
+	fprintf(stderr, " \t -T don't try to translate mac to originator address\n");
+}*/
+
+/*static void sig_handler(int sig)
+{
+	switch (sig) {
+	case SIGINT:
+	case SIGTERM:
+		is_aborted = 1;
+		break;
+	default:
+		break;
+	}
+}*/
+char *batString = "bat0";
+int dataSend(char *mesh_iface, int argc, char **argv){
+
+	char *destString 
+,*destMacString;
+	struct ether_addr *dstMac;
+	struct bat_host *batHost;
+	printf("sample %s %d %s\n",mesh_iface, argc, argv[0]);
+	int code = openFile();
+	if(argc<=2){
+		printf("No destination specified \n ");
+		return 0;
+	}	
+
+printf("asdasd");
+	if (code==1){
+		printf("%s interface not yet loaded into the kernel",batString);
+	}
+	else{
+		int rCode = readFile();
+		if(rCode==1){
+				printf("No Neighbors in the vicinity of the node\n");
+		}	
+else{
+	printf("yes ne	");
+
+			destString = argv[1];
+			printf("%s",destString);
+/*			bat_hosts_init(0);
+			batHost = bat_hosts_find_by_name(destString);
+			dstMac = &batHost->mac_addr;
+			if(!dstMac){printf("Could not resolve MAC Address");}
+			destMacString = ether_ntoa_long(dstMac);
+			printf("%s",destMacString);
+//			getNeighbourTable();
+		}*/
+//			getNeighbourTable();
+	}
+	closeFile();
+	return 0;
+}
+
+
+
+
