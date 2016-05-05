@@ -89,7 +89,7 @@ int tcpSender(char *destMacString,char *destIp){
 	etherFrame = (uint8_t *)malloc(IP_MAXPACKET * sizeof(uint8_t));
 	
 
-//	srcIp = malloc()
+	//	srcIp = malloc()
 	sockid =  socket(PF_PACKET, SOCK_RAW, htons (ETH_P_ALL));
 	if(sockid<0){
 		printf("Socket failed to get descriptor\n");
@@ -114,8 +114,8 @@ int tcpSender(char *destMacString,char *destIp){
 		printf("%02x:",srcMac[i]);
 	}
 
-//	bat_hosts_init(0);
-//	batHost = bat_hosts_find_by_name(destString);//get the batHost from the table
+	//	bat_hosts_init(0);
+	//	batHost = bat_hosts_find_by_name(destString);//get the batHost from the table
 	//dstMac = &batHost->mac_addr; 
 	//if(!dstMac){printf("Could not resolve MAC Address");goto close
 
@@ -126,16 +126,15 @@ int tcpSender(char *destMacString,char *destIp){
 	c[3]=convert(destMacString[9])*16  + convert(destMacString[10]);
 	c[4]=convert(destMacString[12])*16 + convert(destMacString[13]);
 	c[5]=convert(destMacString[15])*16 + convert(destMacString[16]);
-	for(int i=0;i<6;i++){
+	/*for(int i=0;i<6;i++){
 	printf("%d",c[i]);}
-
+*/
 //	printf("Destination Mac Address %c\n",destMacString[2]);
 	memcpy(dstMac,c,6*sizeof(uint8_t));
 	printf("Destination Mac Address in uint format :: \n");
 	for(int i=0;i<6;i++){
 		if(i==5){
 			printf("%02x\n",dstMac[i]);break;
-
 		}
 		printf("%02x:",dstMac[i]);
 	}
@@ -167,19 +166,10 @@ int tcpSender(char *destMacString,char *destIp){
 	// Flags, and Fragmentation offset (3, 13 bits): 0 since single datagram
 	
 	ipFlags[0] = 0;	  // Zero (1 bit)
-	
-	
 	ipFlags[1] = 0; 	  // Do not fragment flag (1 bit)
-	
-	
 	ipFlags[2] = 0;	  // More fragments following flag (1 bit)
-	
-	
 	ipFlags[3] = 0; 	  // Fragmentation offset (13 bits)
-	
-	
 	iphdr.ip_off = htons ((ipFlags[0] << 15)+ (ipFlags[1] << 14) + (ipFlags[2] << 13) + ipFlags[3]);
-	
 	iphdr.ip_ttl = 255; 	// Time-to-Live (8 bits): default to maximum value
 	
 	
@@ -206,102 +196,82 @@ int tcpSender(char *destMacString,char *destIp){
 
 	tcphdr.th_sport = htons (60);   // Source port number (16 bits)
 	tcphdr.th_dport = htons (80);   // Destination port number (16 bits)
-	
-	// Sequence number (32 bits)
-	tcphdr.th_seq = htonl (0);
-	
-	// Acknowledgement number (32 bits): 0 in first packet of SYN/ACK process
-	tcphdr.th_ack = htonl (0);
-	
-	// Reserved (4 bits): should be 0
-	tcphdr.th_x2 = 0;
-	
-	// Data offset (4 bits): size of TCP header in 32-bit words
-	tcphdr.th_off = TCP_HDRLEN / 4;
+	tcphdr.th_seq = htonl (0); 	// Sequence number (32 bits)
+	tcphdr.th_ack = htonl (0);	// Acknowledgement number (32 bits): 0 in first packet of SYN/ACK process
+	tcphdr.th_x2 = 0;	// Reserved (4 bits): should be 0
+	tcphdr.th_off = TCP_HDRLEN / 4;	// Data offset (4 bits): size of TCP header in 32-bit words
 
 	// Flags (8 bits)
 	
 	tcpFlags[0] = 0; 	// FIN flag (1 bit)
-
-	
 	tcpFlags[1] = 1;	// SYN flag (1 bit): set to 1
-
-	
 	tcpFlags[2] = 0;	// RST flag (1 bit)
-
-	
 	tcpFlags[3] = 0;	// PSH flag (1 bit)
-
-	
 	tcpFlags[4] = 0;	// ACK flag (1 bit)
-
-	
 	tcpFlags[5] = 0;	// URG flag (1 bit)
-
 	tcpFlags[6] = 0;	// ECE flag (1 bit)
-
 	
 	// CWR flag (1 bit)
 	tcpFlags[7] = 0;
-	
+
 	tcphdr.th_flags = 0;
 	for (int i=0; i<8; i++) {
 		tcphdr.th_flags += (tcpFlags[i] << i);
 	}
-	
+
 	// Window size (16 bits)
 	tcphdr.th_win = htons (65535);
 
-	  // TCP checksum (16 bits)
-	  tcphdr.th_sum = tcp4_checksum (iphdr, tcphdr);
-	  // Urgent pointer (16 bits): 0 (only valid if URG flag is set)
-	  tcphdr.th_urp = htons (0);
+	// TCP checksum (16 bits)
+	tcphdr.th_sum = tcp4_checksum (iphdr, tcphdr);
+	// Urgent pointer (16 bits): 0 (only valid if URG flag is set)
+	tcphdr.th_urp = htons (0);
 
 
- // Fill out ethernet frame header.
+	// Fill out ethernet frame header.
 
+	// Ethernet frame length = ethernet header (MAC + MAC + ethernet type) + ethernet data (IP header + TCP header)
+	frameLength = 6 + 6 + 2 + IP4_HDRLEN + TCP_HDRLEN;
 
-  // Ethernet frame length = ethernet header (MAC + MAC + ethernet type) + ethernet data (IP header + TCP header)
-  frameLength = 6 + 6 + 2 + IP4_HDRLEN + TCP_HDRLEN;
+	// Destination and Source MAC addresses
+	memcpy (etherFrame, dstMac, 6 * sizeof (uint8_t));
+	memcpy (etherFrame + 6, srcMac, 6 * sizeof (uint8_t));
 
-  // Destination and Source MAC addresses
-  memcpy (etherFrame, dstMac, 6 * sizeof (uint8_t));
-  memcpy (etherFrame + 6, srcMac, 6 * sizeof (uint8_t));
+	// Next is ethernet type code (ETH_P_IP for IPv4).
+	etherFrame[12] = ETH_P_IP / 256;
+	etherFrame[13] = ETH_P_IP % 256;
 
-  // Next is ethernet type code (ETH_P_IP for IPv4).
-  etherFrame[12] = ETH_P_IP / 256;
-  etherFrame[13] = ETH_P_IP % 256;
+	// Next is ethernet frame data (IPv4 header + TCP header).
 
-  // Next is ethernet frame data (IPv4 header + TCP header).
+	// IPv4 header
+	memcpy (etherFrame + ETH_HDRLEN, &iphdr, IP4_HDRLEN * sizeof (uint8_t));
 
-  // IPv4 header
-  memcpy (etherFrame + ETH_HDRLEN, &iphdr, IP4_HDRLEN * sizeof (uint8_t));
+	// TCP header
+	memcpy (etherFrame + ETH_HDRLEN + IP4_HDRLEN, &tcphdr, TCP_HDRLEN * sizeof (uint8_t));
+	printf("Ethernet Packet with IP and TCP payload created\n");
+	
+	// Submit request for a raw socket descriptor.
+	if ((sockid = socket (PF_PACKET, SOCK_RAW, htons (ETH_P_ALL))) < 0) {
+		printf ("socket request for data sending failed ");
+		exit (EXIT_FAILURE);
+	}
 
-  // TCP header
-  memcpy (etherFrame + ETH_HDRLEN + IP4_HDRLEN, &tcphdr, TCP_HDRLEN * sizeof (uint8_t));
+	memset (&device, 0, sizeof (device));
 
-  // Submit request for a raw socket descriptor.
-  if ((sockid = socket (PF_PACKET, SOCK_RAW, htons (ETH_P_ALL))) < 0) {
-    printf ("socket request for data sending failed ");
-    exit (EXIT_FAILURE);
-  }
-
-memset (&device, 0, sizeof (device));
-
-  if ((device.sll_ifindex = if_nametoindex (intf)) == 0) {
-    printf ("if_nametoindex() failed to obtain interface index corresponding to %s ",intf);
-    exit (EXIT_FAILURE);
-  }
-  printf ("Index for interface %s is %i\n", intf, device.sll_ifindex);
+	if ((device.sll_ifindex = if_nametoindex (intf)) == 0) {
+		printf ("if_nametoindex() failed to obtain interface index corresponding to %s ",intf);
+		exit (EXIT_FAILURE);
+	}
+	printf ("Index for interface %s is %i\n", intf, device.sll_ifindex);
 
   // Send ethernet frame to socket.
 	
-  bytes = sendto(sockid, etherFrame, frameLength, 0, (struct sockaddr *) &device, sizeof (device));
+	bytes = sendto(sockid, etherFrame, frameLength, 0, (struct sockaddr *) &device, sizeof (device));
 	if(bytes<=0){
 		printf("send to () %s failed",dstMac);
 	}
   	else{
-		printf("Data Send succesfully\n");
+		printf("%d bytes of Data Send succesfully SourceIP:%s, DestinationIP:%s, SourceMAC:%s, DestinationMAC:%s \n",bytes,srcIp, destIp,srcMac,dstMac);
 	}
 
 	return 0;
